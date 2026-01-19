@@ -1,0 +1,97 @@
+name: Compile LaTeX Document
+
+# Trigger this workflow on:
+# 1. Pushes to the main branch that modify .tex files
+# 2. Pull requests that modify .tex files
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.tex'
+  pull_request:
+    paths:
+      - '**.tex'
+
+jobs:
+  compile-latex:
+    runs-on: ubuntu-latest
+    
+    # Limit permissions for security
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      # Install TeXLive packages
+      # CURRENTLY INSTALLED PACKAGES:
+      # - texlive-base: Core LaTeX functionality
+      # - texlive-latex-recommended: Commonly used LaTeX packages
+      # - texlive-latex-extra: Additional LaTeX packages (includes many useful packages)
+      # - texlive-fonts-recommended: Standard fonts for LaTeX
+      # - texlive-bibtex-extra: Bibliography management tools
+      #
+      # These packages cover most common LaTeX needs including:
+      # - amsmath (mathematical typesetting)
+      # - graphicx (graphics and images)
+      # - hyperref (hyperlinks and PDF metadata)
+      # - And many more standard packages
+      #
+      # HOW TO ADD MORE PACKAGES:
+      # If your compilation fails with an error like "File `packagename.sty' not found",
+      # you need to install additional TeXLive packages. Common additions include:
+      #
+      # For scientific/academic publishing:
+      # - texlive-publishers: Packages for various publishers (IEEE, ACM, Springer, etc.)
+      # - texlive-science: Scientific packages (algorithms, chemistry, physics, etc.)
+      #
+      # For linguistics:
+      # - texlive-humanities: Packages for linguistics, critical editions, etc.
+      #
+      # For fonts:
+      # - texlive-fonts-extra: Additional font packages
+      #
+      # To add packages, add them to the apt-get install line below, like:
+      # sudo apt-get install -y texlive-base texlive-latex-recommended texlive-publishers
+      #
+      # HOW TO FIND MISSING PACKAGES FROM ERROR LOGS:
+      # 1. Check the workflow run logs in the "Compile LaTeX document" step
+      # 2. Look for error messages like "! LaTeX Error: File `xyz.sty' not found"
+      # 3. Search online for "xyz.sty ubuntu package" or "xyz.sty texlive"
+      # 4. The package is usually named texlive-<category> where the .sty file belongs
+      # 5. Common mappings:
+      #    - algorithm2e.sty → texlive-science
+      #    - IEEEtran.cls → texlive-publishers
+      #    - beamer.cls → texlive-latex-recommended (already included)
+      - name: Install TeXLive
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            texlive-base \
+            texlive-latex-recommended \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-bibtex-extra
+      
+      # Compile the LaTeX document
+      # We run pdflatex twice to ensure:
+      # 1. First run: Generates auxiliary files (.aux, .toc, etc.)
+      # 2. Second run: Uses auxiliary files to resolve cross-references, table of contents, etc.
+      # Note: -interaction=nonstopmode prevents the build from hanging on errors
+      - name: Compile LaTeX document
+        run: |
+          pdflatex -interaction=nonstopmode document.tex
+          pdflatex -interaction=nonstopmode document.tex
+      
+      # Upload the compiled PDF as an artifact
+      # The artifact will be available for download from the workflow run page
+      # Artifacts are kept for 90 days by default
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-pdf
+          path: document.pdf
+          # Keep the artifact for 90 days (GitHub's default)
+          retention-days: 90
