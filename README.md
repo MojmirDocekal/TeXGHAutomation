@@ -146,7 +146,8 @@ To see all review comments:
 
 ### PDF has incorrect references or table of contents
 - The workflow runs `pdflatex` twice, which should resolve most references
-- If issues persist, you may need to add a third run or use `bibtex` for bibliographies
+- If you're using bibliographies with BibTeX, you'll need to modify the workflow to add `bibtex` compilation between the two `pdflatex` runs
+- For complex documents, you may need to add additional compilation passes
 
 ### Workflow doesn't trigger
 - Make sure you're pushing changes to `.tex` files
